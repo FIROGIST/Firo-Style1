@@ -1,165 +1,361 @@
-// ========== إدارة لوحة التحكم ==========
-
-// كلمة المرور السرية - تقدر تغيرها زي ما تحب
-const ADMIN_PASSWORD = "Firo@2024";
-
-// تحقق من حالة تسجيل الدخول
-document.addEventListener('DOMContentLoaded', function() {
-    checkLoginStatus();
-});
-
-// ========== التحقق من كلمة المرور ==========
-function checkPassword() {
-    const password = document.getElementById('passwordInput').value;
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم | Firo Style Admin</title>
     
-    if (password === ADMIN_PASSWORD) {
-        localStorage.setItem('firo_admin_logged_in', 'true');
-        showAdminPanel();
-    } else {
-        alert('❌ كلمة المرور غير صحيحة!');
-        document.getElementById('passwordInput').value = '';
-    }
-}
-
-// ========== التحقق من حالة تسجيل الدخول ==========
-function checkLoginStatus() {
-    const isLoggedIn = localStorage.getItem('firo_admin_logged_in');
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     
-    if (isLoggedIn === 'true') {
-        showAdminPanel();
-    }
-}
-
-// ========== إظهار لوحة التحكم ==========
-function showAdminPanel() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('adminPanel').style.display = 'block';
-    loadAdminProducts();
-}
-
-// ========== تسجيل الخروج ==========
-function logout() {
-    localStorage.removeItem('firo_admin_logged_in');
-    document.getElementById('adminPanel').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'block';
-    document.getElementById('passwordInput').value = '';
-}
-
-// ========== معاينة الصورة ==========
-document.addEventListener('DOMContentLoaded', function() {
-    const imageInput = document.getElementById('productImage');
+    <style>
+        /* ========== تنسيقات صفحة الأدمن ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #F5F5DC 0%, #E8DCC8 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        /* شاشة تسجيل الدخول */
+        .login-screen {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .login-screen h1 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .login-screen input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #D4C5A9;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.1em;
+            text-align: center;
+            outline: none;
+        }
+        
+        .login-screen input:focus {
+            border-color: #c4a882;
+            box-shadow: 0 0 15px rgba(212, 197, 169, 0.3);
+        }
+        
+        /* لوحة التحكم */
+        .admin-panel {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            max-width: 1200px;
+            width: 100%;
+            padding: 30px;
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #F5F5DC;
+        }
+        
+        .admin-header h1 {
+            color: #333;
+        }
+        
+        .logout-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+        
+        /* نموذج النشر */
+        .publish-form {
+            background: #F9F9F9;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid #F5F5DC;
+        }
+        
+        .publish-form h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: #555;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #D4C5A9;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1em;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #c4a882;
+            box-shadow: 0 0 15px rgba(212, 197, 169, 0.3);
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        /* رفع الصور */
+        .image-upload {
+            border: 3px dashed #D4C5A9;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .image-upload:hover {
+            border-color: #c4a882;
+            background: #FDFDFD;
+        }
+        
+        .image-upload input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        /* زر النشر */
+        .publish-btn {
+            background: linear-gradient(135deg, #D4C5A9 0%, #c4a882 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 900;
+            font-size: 1.1em;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .publish-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(212, 197, 169, 0.4);
+        }
+        
+        /* قائمة المنتجات المنشورة */
+        .published-products {
+            margin-top: 30px;
+        }
+        
+        .published-products h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .admin-product-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .admin-product-card {
+            background: white;
+            border: 1px solid #E0E0E0;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .admin-product-card:hover {
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+        }
+        
+        .admin-product-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .admin-product-info {
+            padding: 15px;
+        }
+        
+        .admin-product-info h3 {
+            margin-bottom: 5px;
+            font-size: 1em;
+        }
+        
+        .admin-product-info .price {
+            color: #e67e22;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+        
+        .delete-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .delete-btn:hover {
+            background: #ff5252;
+        }
+        
+        .empty-message {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
     
-    if (imageInput) {
-        imageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
+    <!-- ========== شاشة تسجيل الدخول ========== -->
+    <div class="login-screen" id="loginScreen">
+        <h1>🔐 لوحة تحكم Firo Style</h1>
+        <p style="margin-bottom: 20px; color: #666;">أدخل كلمة المرور للدخول</p>
+        <input type="password" id="passwordInput" placeholder="كلمة المرور" onkeypress="if(event.key === 'Enter') checkPassword()">
+        <button class="publish-btn" onclick="checkPassword()">دخول</button>
+    </div>
+    
+    <!-- ========== لوحة التحكم ========== -->
+    <div class="admin-panel" id="adminPanel">
+        <div class="admin-header">
+            <h1>✨ لوحة تحكم Firo Style</h1>
+            <button class="logout-btn" onclick="logout()">تسجيل خروج</button>
+        </div>
+        
+        <!-- نموذج النشر -->
+        <div class="publish-form">
+            <h2>📝 نشر منتج جديد</h2>
             
-            if (file) {
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    const preview = document.getElementById('imagePreview');
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                };
-                
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-});
-
-// ========== نشر منتج جديد ==========
-function publishProduct() {
-    // جلب البيانات من النموذج
-    const name = document.getElementById('productName').value.trim();
-    const description = document.getElementById('productDescription').value.trim();
-    const price = parseFloat(document.getElementById('productPrice').value);
-    const category = document.getElementById('productCategory').value;
-    const featured = document.getElementById('productFeatured').checked;
-    const imageFile = document.getElementById('productImage').files[0];
-    
-    // التحقق من البيانات
-    if (!name || !description || !price || !imageFile) {
-        alert('⚠️ من فضلك أكمل كل البيانات المطلوبة!');
-        return;
-    }
-    
-    // تحويل الصورة إلى Base64
-    const reader = new FileReader();
-    
-    reader.onload = function(e) {
-        const productData = {
-            name: name,
-            description: description,
-            price: price,
-            category: category,
-            image: e.target.result, // الصورة Base64
-            featured: featured
-        };
-        
-        // إضافة المنتج
-        addProduct(productData);
-        
-        // مسح النموذج
-        clearForm();
-        
-        // تحديث القائمة
-        loadAdminProducts();
-        
-        alert('✅ تم نشر المنتج بنجاح!');
-    };
-    
-    reader.readAsDataURL(imageFile);
-}
-
-// ========== مسح النموذج ==========
-function clearForm() {
-    document.getElementById('productName').value = '';
-    document.getElementById('productDescription').value = '';
-    document.getElementById('productPrice').value = '';
-    document.getElementById('productCategory').value = 'مكرميات حائط';
-    document.getElementById('productFeatured').checked = false;
-    document.getElementById('productImage').value = '';
-    document.getElementById('imagePreview').style.display = 'none';
-}
-
-// ========== تحميل المنتجات في لوحة التحكم ==========
-function loadAdminProducts() {
-    const products = getProducts();
-    const productList = document.getElementById('adminProductList');
-    
-    if (!productList) return;
-    
-    if (products.length === 0) {
-        productList.innerHTML = `
-            <div class="empty-message" style="grid-column: 1/-1;">
-                <p style="font-size: 3em; margin-bottom: 20px;">📦</p>
-                <h3>مفيش منتجات منشورة حالياً</h3>
-                <p>ابدأ في نشر منتجاتك الجديدة!</p>
+            <div class="form-group">
+                <label>اسم المنتج *</label>
+                <input type="text" id="productName" placeholder="مثال: مكرمية حائط كبيرة">
             </div>
-        `;
-        return;
-    }
-    
-    productList.innerHTML = products.map(product => `
-        <div class="admin-product-card">
-            <img src="${product.image}" alt="${product.name}">
-            <div class="admin-product-info">
-                <h3>${product.name}</h3>
-                <p class="price">${product.price} جنيه</p>
-                <p style="font-size: 0.85em; color: #666; margin-bottom: 10px;">${product.category}</p>
-                ${product.featured ? '<span style="background: #F5F5DC; padding: 3px 10px; border-radius: 15px; font-size: 0.8em; display: inline-block; margin-bottom: 10px;">⭐ مميز</span>' : ''}
-                <button class="delete-btn" onclick="deleteAdminProduct(${product.id})">🗑️ حذف</button>
+            
+            <div class="form-group">
+                <label>الوصف *</label>
+                <textarea id="productDescription" placeholder="اكتب وصف المنتج هنا..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>السعر (جنيه) *</label>
+                <input type="number" id="productPrice" placeholder="مثال: 450" min="0">
+            </div>
+            
+            <div class="form-group">
+                <label>الفئة *</label>
+                <select id="productCategory">
+                    <option value="مكرميات حائط">مكرميات حائط</option>
+                    <option value="إكسسوارات">إكسسوارات</option>
+                    <option value="ديكور">ديكور</option>
+                    <option value="حقائب">حقائب</option>
+                    <option value="أخرى">أخرى</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>صورة المنتج *</label>
+                <div class="image-upload">
+                    <p>📸 اضغط هنا لاختيار صورة</p>
+                    <input type="file" id="productImage" accept="image/*">
+                </div>
+                <img id="imagePreview" class="image-preview">
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="productFeatured" style="width: auto; margin-left: 10px;">
+                    منتج مميز (يظهر في الصفحة الرئيسية)
+                </label>
+            </div>
+            
+            <button class="publish-btn" onclick="publishProduct()">🚀 نشر المنتج</button>
+        </div>
+        
+        <!-- المنتجات المنشورة -->
+        <div class="published-products">
+            <h2>📦 المنتجات المنشورة</h2>
+            <div class="admin-product-list" id="adminProductList">
+                <!-- المنتجات هتظهر هنا -->
             </div>
         </div>
-    `).join('');
-}
-
-// ========== حذف منتج من لوحة التحكم ==========
-function deleteAdminProduct(id) {
-    if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
-        deleteProduct(id);
-        loadAdminProducts();
-        alert('✅ تم حذف المنتج بنجاح!');
-    }
-}
+    </div>
+    
+    <!-- ربط ملفات JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
